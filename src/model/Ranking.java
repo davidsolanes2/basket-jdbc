@@ -7,13 +7,14 @@ package model;
  */
 
 public class Ranking {
-    
+
     private int ranking;
     private String name;
     private int nbaskets;
     
     public Ranking() {
-        
+      int ranking = 0;
+      
     }
 
     public Ranking(int ranking, String name, int nbaskets) {
@@ -48,8 +49,7 @@ public class Ranking {
 
     @Override
     public String toString() {
-        return "Ranking{" + "ranking=" + ranking + ", name=" + name + ", nbaskets=" + nbaskets + '}';
+        return "Ranking{" + " ranking=" + ranking + ", name=" + name + ", nbaskets=" + nbaskets + '}';
     }
-    
     
 }

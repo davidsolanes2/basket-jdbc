@@ -17,7 +17,12 @@ public class Player {
     private String position;
     private Team team;
 
-    public Player() {}
+    public Player() {
+        team = new Team();
+        birth = LocalDate.now();
+        name = "";
+        position = "";
+    }
     
     public Player(String name, LocalDate birth, int nbaskets, int nassists, int nrebounds,
             String position, Team team) {
@@ -84,6 +89,12 @@ public class Player {
 
     public void setTeam(Team team) {
         this.team = team;
+    }
+
+    @Override
+    public String toString() {
+        return "Player{" + "name=" + name + ", birth=" + birth + ", nbaskets=" + nbaskets + ", nassists=" + nassists + ", nrebounds=" + nrebounds + ", position=" + position + ", team=" + team.getName() + '}';
+    
     }
     
 }

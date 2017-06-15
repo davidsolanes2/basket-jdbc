@@ -9,7 +9,7 @@ import java.time.LocalDate;
  */
 public class Team {
     
-    private String name;
+    String name;
     private String city;
     private LocalDate creacion;
     
@@ -18,8 +18,6 @@ public class Team {
     public Team(String name) {
         this.name = name;
     }
-    
-    
 
     public Team(String name, String city, LocalDate creacion) {
         this.name = name;
@@ -50,5 +48,12 @@ public class Team {
     public void setCreacion(LocalDate creacion) {
         this.creacion = creacion;
     }
+
+    @Override
+    public String toString() {
+        return "Team{" + "name=" + name + ", city=" + city + ", creacion=" + creacion + '}';
+    }
+    
+    
     
 }

@@ -3,6 +3,7 @@ package persistence;
 
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,16 +15,30 @@ import java.util.List;
 import model.Player;
 import model.Team;
 import model.Ranking;
+import model.averagePlayer;
 
 /*
  * @author david
  */
 
 public class ConectarJDBC {
+    
     private Connection conexio;
     
     public ConectarJDBC() {
     
+    }
+    
+    public void deletePlayer() throws SQLException {
+        try (Statement st = conexio.createStatement()) {
+            st.executeUpdate("delete from player;");
+        }
+    }
+    
+    public void deleteTeam() throws SQLException {
+        try (Statement st = conexio.createStatement()) {
+            st.executeUpdate("delete from team;");
+        }
     }
     
     //1
@@ -80,47 +95,42 @@ public class ConectarJDBC {
     
     //5
     public void borrarPlayer(Player bt) throws SQLException {
-        String delete = "delete where name = ? ";
+        String delete = "delete from player where name = ?";
         try (PreparedStatement ps = conexio.prepareStatement(delete)) {
             ps.setString(1, bt.getName());
-            ps.setDate(2, java.sql.Date.valueOf(bt.getBirth()));
-            ps.setInt(3, bt.getNbaskets());
-            ps.setInt(4, bt.getNassists());
-            ps.setInt(5, bt.getNrebounds());
-            ps.setString(6, bt.getPosition());
-            ps.setString(7, bt.getTeam().getName());
             ps.executeUpdate();
             ps.close();
         }
     }
     
     //6
-    public Player selectPlayerbyName(String name) throws SQLException {
-        Player p = new Player();
-        String query = "select * from player where name = ?";
+    public Player selectPlayerByName(String name) throws SQLException {
+        String query ="select * from player where name=?";
         PreparedStatement ps = conexio.prepareStatement(query);
         ps.setString(1, name);
         ResultSet rs = ps.executeQuery();
-        if(rs.next()){
-            p.setName("name");
-            p.setBirth(rs.getDate("birth").toLocalDate());
-            p.setNbaskets(rs.getInt("nbaskets"));
-            p.setNassists(rs.getInt("nassists"));
-            p.setNrebounds(rs.getInt("nrebounds"));
-            p.setPosition(rs.getString("position"));
-            p.setTeam(new Team(rs.getString("team")));
+        Player player = new Player();
+        if (rs.next()) {
+            player.setName(rs.getString("name"));
+            player.setBirth(rs.getDate("birth").toLocalDate());
+            player.setNassists(rs.getInt("nassists"));
+            player.setNbaskets(rs.getInt("nbaskets"));
+            player.setNrebounds(rs.getInt("nrebounds"));
+            player.setPosition(rs.getString("position"));
+            player.setTeam(new Team(rs.getString("team"))); 
         }
         rs.close();
         ps.close();
-        return p;
+        
+        return player;
     }
     
     //7
     public List<Player> selectAllPlayers(String name) throws SQLException {
-        String query = "select * from player where name like '%"+name+"%' ";
+        String query = "select * from player where name like '%"+name+"%'";
         Statement st = conexio.createStatement();
         ResultSet rs = st.executeQuery(query);
-        List<Player> players = new ArrayList<>();
+        ArrayList players = new ArrayList<>();
         while (rs.next()) {
             Player p = new Player();
             p.setName(rs.getString("name"));
@@ -130,6 +140,7 @@ public class ConectarJDBC {
             p.setNrebounds(rs.getInt("nrebounds"));
             p.setPosition(rs.getString("position"));
             p.setTeam(new Team(rs.getString("team")));
+            players.add(p);
         }
         rs.close();
         st.close();
@@ -137,27 +148,51 @@ public class ConectarJDBC {
     }
     
     //8
-    public List<Player> selectPlayerGreaterThan(int nbaskets) throws SQLException {
-        String query = "select * from player where nbaskets >= =? ";
+    public List<Player> selectPlayerGreaterThan() throws SQLException {
+        String query = "select name, birth, nbaskets, team from player where nbaskets=(select max(nbaskets) from player)";
         Statement st = conexio.createStatement();
         ResultSet rs = st.executeQuery(query);
-        List<Player> players = new ArrayList<>();
+        ArrayList players = new ArrayList<>();
         while (rs.next()) {
             Player p = new Player();
-            p.setName(rs.getString("Nombre"));
+            p.setName(rs.getString("name"));
             p.setBirth(rs.getDate("birth").toLocalDate());
             p.setNbaskets(rs.getInt("nbaskets"));
+            p.setTeam(new Team(rs.getString("team")));
+            players.add(p);
         }
         rs.close();
         st.close();
         return players;
     }
     
-    //9
-    public List<Player> selectPlayerAssistsBetween() throws SQLException {
-        String query = "select * from player where nassists between =? and =?";
-        Statement st = conexio.createStatement();
-        ResultSet rs = st.executeQuery(query);
+    //9 
+    public List<Player> selectPlayerAssistsBetween(int num1, int num2) throws SQLException {
+        String query = "select * from player where nassists between "+num1+" and "+num2+" ";
+            PreparedStatement ps = conexio.prepareStatement(query);
+            ResultSet rs = ps.executeQuery(query);
+            ArrayList players = new ArrayList<>();
+            while (rs.next()) {
+                Player p = new Player();
+                p.setName(rs.getString("name"));
+                p.setBirth(rs.getDate("birth").toLocalDate());
+                p.setNbaskets(rs.getInt("nbaskets"));
+                p.setNassists(rs.getInt("nassists"));
+                p.setNrebounds(rs.getInt("nrebounds"));
+                p.setPosition(rs.getString("position"));
+                p.setTeam(new Team(rs.getString("team")));
+                players.add(p);
+            }
+            ps.close();
+            rs.close();
+            return players;
+    }
+  
+    //10 
+    public List<Player> selectPlayerByPosition(String aux) throws SQLException {
+        String query = "select * from player where player.position='"+aux+"' ";
+        PreparedStatement ps = conexio.prepareStatement(query);
+        ResultSet rs = ps.executeQuery(query);
         List<Player> players = new ArrayList<>();
         while (rs.next()) {
             Player p = new Player();
@@ -165,68 +200,63 @@ public class ConectarJDBC {
             p.setBirth(rs.getDate("birth").toLocalDate());
             p.setNbaskets(rs.getInt("nbaskets"));
             p.setNassists(rs.getInt("nassists"));
-        }
-        rs.close();
-        st.close();
-        return players;
-    }
-
-    //10
-    public List<Player> selectPlayerByPosition(String position) throws SQLException {
-        String query = "select * from player where position like '%"+position+"%'";
-        Statement st = conexio.createStatement();
-        ResultSet rs = st.executeQuery(query);
-        List<Player> players = new ArrayList<>();
-        while (rs.next()) {
-            Player p = new Player();
-            p.setName(rs.getString("name"));
-            p.setBirth(rs.getDate("birth").toLocalDate());
+            p.setNrebounds(rs.getInt("nrebounds"));
             p.setPosition(rs.getString("position"));
+            p.setTeam(new Team(rs.getString("team")));
+            players.add(p);
         }
+        ps.close();
         rs.close();
-        st.close();
         return players;
     }
     
-    //11
-    public List<Player> selectPlayerByBirth(LocalDate birth) throws SQLException {
-        String query = "select * from player where birth <= =?";
-        Statement st = conexio.createStatement();
-        ResultSet rs = st.executeQuery(query);
+    //11 
+    public List<Player> selectPlayerByBirth(Date aux) throws SQLException {
+        String query = "select name, birth from player where birth<='"+aux.toLocalDate()+"' ";
+        PreparedStatement ps = conexio.prepareStatement(query);
+        ResultSet rs = ps.executeQuery(query);
         List<Player> players = new ArrayList<>();
-        while (rs.next()) {
+        if (rs.next()) {
             Player p = new Player();
             p.setName(rs.getString("name"));
             p.setBirth(rs.getDate("birth").toLocalDate());
+            players.add(p);
         }
+        ps.close();
         rs.close();
-        st.close();
         return players;
     }
     
-    //12
-    public List<Player> selectPlayerByGroupBy(String position) throws SQLException {
-        String query = "select name, AVG(nbaskets), AVG(nassists), AVG(nrebounds)+"
-                + "MAX(nbaskets) + MAX(nassists) + MAX(nrebounds)+"
-                + "MIN(nbaskets) + MIN(nassists) + MIN(nrebounds)+"
-                + "from player where position like '%"+position+"%'";
+    //12 
+    public List<averagePlayer> selectPlayerByGroupByPosition() throws SQLException {
+        String query = "select position, AVG(nbaskets), AVG(nassists), AVG(nrebounds), "
+                + " MAX(nbaskets), MAX(nassists), MAX(nrebounds), "
+                + " MIN(nbaskets), MIN(nassists), MIN(nrebounds) from player group by position";
         Statement st = conexio.createStatement();
         ResultSet rs = st.executeQuery(query);
-        List<Player> players = new ArrayList<>();
+        List<averagePlayer> averagePlayerList = new ArrayList<>();
         while (rs.next()) {
-            Player p = new Player();
-            p.setName(rs.getString("name"));
-            p.setTeam(new Team(rs.getString("team")));
-            //revisar, resto de campos
+            averagePlayer averageList = new averagePlayer();
+            averageList.setPosition(rs.getString("position"));
+            averageList.setAvgBasket(rs.getDouble("avg(nbaskets)"));
+            averageList.setAvgAssist(rs.getDouble("avg(nassists)"));
+            averageList.setAvgRebounds(rs.getDouble("avg(nrebounds)"));
+            averageList.setMaxBasket(rs.getInt("max(nbaskets)"));
+            averageList.setMaxAssist(rs.getInt("max(nassists)"));
+            averageList.setMaxRebounds(rs.getInt("max(nrebounds)"));
+            averageList.setMinBasket(rs.getInt("min(nbaskets)"));
+            averageList.setMinAssist(rs.getInt("min(nassists)"));
+            averageList.setMinRebounds(rs.getInt("min(nrebounds)"));
+            averagePlayerList.add(averageList);
         }
-        rs.close();
         st.close();
-        return players;
+        rs.close(); 
+        return averagePlayerList;
     }
     
     //13
     public List<Player> selectPlayerByBaskets() throws SQLException {
-        String query = "select name, nbaskets from player order by nbaskets desc ";
+        String query = "select name, nbaskets, position, team from player order by nbaskets desc ";
         Statement st = conexio.createStatement();
         ResultSet rs = st.executeQuery(query);
         List<Player> players = new ArrayList<>();
@@ -234,44 +264,49 @@ public class ConectarJDBC {
             Player p = new Player();
             p.setName(rs.getString("name"));
             p.setNbaskets(rs.getInt("nbaskets"));
+            p.setPosition(rs.getString("position"));
+            p.setTeam(new Team(rs.getString("team")));
+            players.add(p);
         }
-        rs.close();
         st.close();
+        rs.close();    
         return players;
     }
     
-    //14
+    //14 REVISAR
     public List<Ranking> selectPlayerByBasketsRanking() throws SQLException {
-        String query = "set @num=0; select @num=0:=@num+1 AS 'Ranking' name, nbaskets from player order by nbaskets desc ";
+        String query = "select name, nbaskets from player order by nbaskets desc";
+//        String query = "set @num=0; select @num:=@num+1 AS 'Relación', name, nbaskets from player order by nbaskets desc";
         Statement st = conexio.createStatement();
         ResultSet rs = st.executeQuery(query);
         List<Ranking> rankings = new ArrayList<>();
         while (rs.next()) {
-            Ranking r = new Ranking ();
-            r.setRanking(rs.getInt("ranking"));
+            Ranking r = new Ranking();
+//            r.setRanking(rs.getInt("ranking"));
             r.setName(rs.getString("name"));
             r.setNbaskets(rs.getInt("nbaskets"));
             rankings.add(r);
         }
-        rs.close();
         st.close();
+        rs.close();
         return rankings;
     }
     
     //15
-    public List<Team> selectTeamByCity(String city) throws SQLException {
-        String query = "select * from team where city = '%+city+%' ";
+    public List<Team> selectTeamByCity(String aux) throws SQLException {
+        String query = "select * from team where city = '"+aux+"' ";
         Statement st = conexio.createStatement();
         ResultSet rs = st.executeQuery(query);
         List<Team> teams = new ArrayList<>();
         while (rs.next()) {
             Team t = new Team();
-            t.setCity("team");
-            t.setName("city");
-            t.setCreacion(rs.getDate("creacion").toLocalDate());
+            t.setCity(rs.getString("city"));
+            t.setName(rs.getString("name"));
+            t.setCreacion(rs.getDate("creation").toLocalDate());
+            teams.add(t);
         }
-        rs.close();
         st.close();
+        rs.close();
         return teams;
     }
     
@@ -286,15 +321,16 @@ public class ConectarJDBC {
             p.setName(rs.getString("name"));
             p.setPosition(rs.getString("position"));
             p.setTeam(new Team(rs.getString("team")));
+            players.add(p);
         }
-        rs.close();
         st.close();
+        rs.close();
         return players;
     }
 
     //17
-    public List<Player> selectPlayerByTeamAndPosition(String position, String team) throws SQLException {
-        String query = "select name from player where position='%"+position+"%' and team='%"+team+"% ";
+    public List<Player> selectPlayerByTeamAndPosition(String aux1, String aux2) throws SQLException {
+        String query = "select name, position, team from player where position='"+aux1+"' and team='"+aux2+"' ";
         Statement st = conexio.createStatement();
         ResultSet rs = st.executeQuery(query);
         List<Player> players = new ArrayList<>();
@@ -303,27 +339,29 @@ public class ConectarJDBC {
             p.setName(rs.getString("name"));
             p.setPosition(rs.getString("position"));
             p.setTeam(new Team(rs.getString("team")));
-            //revisar
+            players.add(p);
         }
-        rs.close();
         st.close();
+        rs.close();
         return players;
     }
       
     //18
-    public List<Player> selectPlayerMaxNbaskets() throws SQLException {
-        String query = "select name, MAX(nbaskets) from player";
+    public ArrayList selectPlayerMaxBasketsByTeam(String aux) throws SQLException {
+        String query = "select name, nbaskets, team from player where team='"+aux+"'and nbaskets = (select max(nbaskets) from player where team='"+aux+"')" ;
         Statement st = conexio.createStatement();
         ResultSet rs = st.executeQuery(query);
-        List<Player> players = new ArrayList<>();
+        ArrayList players = new ArrayList<>();
         while (rs.next()) {
             Player p = new Player();
             p.setName(rs.getString("name"));
             p.setNbaskets(rs.getInt("nbaskets"));
-            //revisar
+            p.setTeam(new Team(rs.getString("team")));
+            players.add(p);
+            
         }
-        rs.close();
         st.close();
+        rs.close();
         return players;
     }
 
@@ -338,9 +376,6 @@ public class ConectarJDBC {
             if (conexio != null) {
             conexio.close();
         }
-    } 
-
-    private void close() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
 }
